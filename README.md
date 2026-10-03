@@ -19,7 +19,7 @@ SF-Symbol-style icons.
   project) and VCS/forge entries (Git, GitHub) are filtered out.
 - **Git status (read-only, never writes)**: branch, uncommitted changes,
   ahead/behind, last commit, and remote. Uncommitted work is highlighted in
-  orange, ahead/behind shows as "*n* not pushed" / "*n* behind", and clicking
+  orange, ahead/behind shows as "_n_ not pushed" / "_n_ behind", and clicking
   the change count lists the changed files. Detached HEADs, repos git refuses
   to read, and missing git binaries are all handled without showing bogus
   "Clean" state.
@@ -28,7 +28,7 @@ SF-Symbol-style icons.
 - **Favorites** and **custom tags**, both persisted between launches.
 - **Filters** (status, Git state, tags, favorites) and **sorting** by name,
   recently modified, recently updated, Git activity, stack, or favorites.
-- **Quick actions**: open in editor, run project, open terminal, open folder,
+- **Quick actions**: open in editor, open terminal, open folder,
   reveal in Explorer, copy path, open Git repository.
 - **Grid / list views**, light/dark/system theme plus accent picker, tray icon
   and a global hotkey.
@@ -42,12 +42,12 @@ npm start
 
 ## How it works
 
-| File | Purpose |
-| --- | --- |
-| `main.js` | Main process: frameless window, `local://` image protocol, filesystem / Git / process IPC, settings persistence |
-| `scanner.js` | Walks your folders, detects projects, extracts metadata and read-only Git status |
-| `preload.js` | Safe `window.api` bridge (context isolation enabled) |
-| `renderer/` | The glassy UI: `index.html`, `styles.css`, `icons.js`, `app.js`, `extras.js` |
+| File         | Purpose                                                                                                         |
+| ------------ | --------------------------------------------------------------------------------------------------------------- |
+| `main.js`    | Main process: frameless window, `local://` image protocol, filesystem / Git / process IPC, settings persistence |
+| `scanner.js` | Walks your folders, detects projects, extracts metadata and read-only Git status                                |
+| `preload.js` | Safe `window.api` bridge (context isolation enabled)                                                            |
+| `renderer/`  | The glassy UI: `index.html`, `styles.css`, `icons.js`, `app.js`, `extras.js`                                    |
 
 All filesystem, Git, and process work happens in the main process; the renderer
 only gets a small, explicit API through `preload.js`.
@@ -58,21 +58,13 @@ only gets a small, explicit API through `preload.js`.
    choose the folder where all your projects live. New folders are detected
    automatically.
 2. Click a card for details, **double-click a card to open it in your editor**,
-   or use the hover buttons (**open in editor**, **run**, **terminal**, reveal)
+   or use the hover buttons (**open in editor**, **terminal**, reveal)
    and the right-click menu for quick actions. The details modal also puts the
    primary actions right under the title, so nothing is buried.
 3. **Hover a card and tap the star** to favorite it, then use the **Favorites**
    entry in the sidebar or the **Filter** menu to focus on it.
 4. Use **New project** to scaffold a folder with a `README.md`, or **New file /
    New folder** from a project's detail view or right-click menu.
-
-### Running a project
-
-The **Run project** action (card hover button, right-click menu, or details
-panel) reads your `package.json` scripts and prefers `dev`, then `start`.
-It uses the detected package manager (`npm`, `pnpm`, `yarn`, or `bun`) and runs
-in the project folder. The menu label shows exactly which script will be
-executed, and the action is disabled when no runnable script exists.
 
 ### Live indicator
 

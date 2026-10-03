@@ -1,203 +1,395 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' local: data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'" />
-  <title>Projects</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <div class="bg" aria-hidden="true">
-    <span class="blob blob-a"></span>
-    <span class="blob blob-b"></span>
-    <span class="blob blob-c"></span>
-  </div>
-
-  <div class="app" id="app">
-    <header class="titlebar" id="titlebar">
-      <div class="traffic-lights">
-        <button class="tl close" id="tl-close" title="Close"><span class="tl-glyph"></span></button>
-        <button class="tl min" id="tl-min" title="Minimize"><span class="tl-glyph"></span></button>
-        <button class="tl max" id="tl-max" title="Zoom"><span class="tl-glyph plus"></span><span class="tl-glyph restore"></span></button>
-      </div>
-      <div class="titlebar-title">
-        <span class="titlebar-logo"></span>
-        <span class="titlebar-name">Projects</span>
-      </div>
-      <div class="titlebar-actions">
-      </div>
-    </header>
-
-    <div class="layout">
-      <aside class="sidebar" id="sidebar">
-        <button class="sidebar-handle" id="btn-toggle-sidebar" title="Collapse sidebar"><span class="sh-ic"></span></button>
-        <div class="sidebar-inner">
-          <div class="search-box">
-            <span class="search-ic"></span>
-            <input id="search-input" type="text" placeholder="Search projects" spellcheck="false" autocomplete="off" />
-          </div>
-
-          <div class="nav-label">Library</div>
-          <a class="nav-item active" id="nav-all" href="#" title="All Projects">
-            <span class="ni-ic"></span><span>All Projects</span><span class="count" id="count-all">0</span>
-          </a>
-          <a class="nav-item" id="nav-fav" href="#" title="Favorites">
-            <span class="ni-ic"></span><span>Favorites</span><span class="count" id="count-fav">0</span>
-          </a>
-
-          <div class="nav-label">Actions</div>
-          <button class="side-btn" id="btn-add-folder" title="Projects folder">
-            <span class="sb-ic"></span><span>Add folder</span>
-          </button>
-          <button class="side-btn primary" id="btn-new-project" title="New project">
-            <span class="sb-ic"></span><span>New project</span>
-          </button>
-        </div>
-        <div class="sidebar-footer">
-          <button class="side-btn ghost" id="btn-settings">
-            <span class="sb-ic"></span><span>Settings</span>
-          </button>
-        </div>
-      </aside>
-
-      <main class="main">
-        <div class="toolbar">
-          <h1 class="toolbar-title" id="toolbar-title">All Projects</h1>
-          <span class="toolbar-count" id="toolbar-count"></span>
-          <button class="tb-btn icon" id="tb-refresh" title="Rescan projects"><span class="tb-ic"></span></button>
-          <div class="toolbar-spacer"></div>
-
-          <div class="view-toggle">
-            <button class="vt-btn active" id="view-grid" title="Grid view"><span class="vt-ic"></span></button>
-            <button class="vt-btn" id="view-list" title="List view"><span class="vt-ic"></span></button>
-          </div>
-
-          <div class="sort-box">
-            <span class="sort-ic"></span>
-            <select id="sort-select" aria-label="Sort">
-              <option value="name">Name</option>
-              <option value="recent">Recently modified</option>
-              <option value="updated">Recently updated</option>
-              <option value="git">Git activity</option>
-              <option value="stack">Stack</option>
-              <option value="favorites">Favorites</option>
-            </select>
-          </div>
-
-          <div class="filter-box" id="filter-box">
-            <button class="filter-trigger" id="filter-trigger" title="Filter projects" aria-haspopup="dialog">
-              <span class="filter-ic"></span>
-              <span class="filter-label">Filter</span>
-              <span class="filter-count" id="filter-count" hidden>0</span>
-            </button>
-            <div class="filter-menu" id="filter-menu" hidden></div>
-          </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; img-src 'self' local: data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self'; connect-src 'self'"
+        />
+        <title>Projects</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div class="bg" aria-hidden="true">
+            <span class="blob blob-a"></span>
+            <span class="blob blob-b"></span>
+            <span class="blob blob-c"></span>
         </div>
 
-        <div class="content-area">
-          <div class="content-scroll" id="scroll">
-            <div class="grid" id="grid"></div>
+        <div class="app" id="app">
+            <header class="titlebar" id="titlebar">
+                <div class="traffic-lights">
+                    <button class="tl close" id="tl-close" title="Close">
+                        <span class="tl-glyph"></span>
+                    </button>
+                    <button class="tl min" id="tl-min" title="Minimize">
+                        <span class="tl-glyph"></span>
+                    </button>
+                    <button class="tl max" id="tl-max" title="Zoom">
+                        <span class="tl-glyph plus"></span
+                        ><span class="tl-glyph restore"></span>
+                    </button>
+                </div>
+                <div class="titlebar-title">
+                    <span class="titlebar-logo"></span>
+                    <span class="titlebar-name">Projects</span>
+                </div>
+                <div class="titlebar-actions"></div>
+            </header>
 
-            <div class="empty-state" id="empty-state" hidden>
-              <div class="empty-art"></div>
-              <h2 id="empty-title">No projects yet</h2>
-              <p id="empty-sub">Add a folder and we'll find your projects for you.</p>
-              <button class="cta" id="empty-add">Add folder</button>
+            <div class="layout">
+                <aside class="sidebar" id="sidebar">
+                    <button
+                        class="sidebar-handle"
+                        id="btn-toggle-sidebar"
+                        title="Collapse sidebar"
+                    >
+                        <span class="sh-ic"></span>
+                    </button>
+                    <div class="sidebar-inner">
+                        <div class="search-box">
+                            <span class="search-ic"></span>
+                            <input
+                                id="search-input"
+                                type="text"
+                                placeholder="Search projects"
+                                spellcheck="false"
+                                autocomplete="off"
+                            />
+                        </div>
+
+                        <div class="nav-label">Library</div>
+                        <a
+                            class="nav-item active"
+                            id="nav-all"
+                            href="#"
+                            title="All Projects"
+                        >
+                            <span class="ni-ic"></span><span>All Projects</span
+                            ><span class="count" id="count-all">0</span>
+                        </a>
+                        <a
+                            class="nav-item"
+                            id="nav-fav"
+                            href="#"
+                            title="Favorites"
+                        >
+                            <span class="ni-ic"></span><span>Favorites</span
+                            ><span class="count" id="count-fav">0</span>
+                        </a>
+
+                        <div class="nav-label">Actions</div>
+                        <button
+                            class="side-btn"
+                            id="btn-add-folder"
+                            title="Projects folder"
+                        >
+                            <span class="sb-ic"></span><span>Add folder</span>
+                        </button>
+                        <button
+                            class="side-btn primary"
+                            id="btn-new-project"
+                            title="New project"
+                        >
+                            <span class="sb-ic"></span><span>New project</span>
+                        </button>
+                    </div>
+                    <div class="sidebar-footer">
+                        <button class="side-btn ghost" id="btn-settings">
+                            <span class="sb-ic"></span><span>Settings</span>
+                        </button>
+                    </div>
+                </aside>
+
+                <main class="main">
+                    <div class="toolbar">
+                        <h1 class="toolbar-title" id="toolbar-title">
+                            All Projects
+                        </h1>
+                        <span class="toolbar-count" id="toolbar-count"></span>
+                        <button
+                            class="tb-btn icon"
+                            id="tb-refresh"
+                            title="Rescan projects"
+                        >
+                            <span class="tb-ic"></span>
+                        </button>
+                        <div class="toolbar-spacer"></div>
+
+                        <div class="view-toggle">
+                            <button
+                                class="vt-btn active"
+                                id="view-grid"
+                                title="Grid view"
+                            >
+                                <span class="vt-ic"></span>
+                            </button>
+                            <button
+                                class="vt-btn"
+                                id="view-list"
+                                title="List view"
+                            >
+                                <span class="vt-ic"></span>
+                            </button>
+                        </div>
+
+                        <div class="sort-box">
+                            <span class="sort-ic"></span>
+                            <select id="sort-select" aria-label="Sort">
+                                <option value="name">Name</option>
+                                <option value="recent">
+                                    Recently modified
+                                </option>
+                                <option value="updated">
+                                    Recently updated
+                                </option>
+                                <option value="git">Git activity</option>
+                                <option value="stack">Stack</option>
+                                <option value="favorites">Favorites</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-box" id="filter-box">
+                            <button
+                                class="filter-trigger"
+                                id="filter-trigger"
+                                title="Filter projects"
+                                aria-haspopup="dialog"
+                            >
+                                <span class="filter-ic"></span>
+                                <span class="filter-label">Filter</span>
+                                <span
+                                    class="filter-count"
+                                    id="filter-count"
+                                    hidden
+                                    >0</span
+                                >
+                            </button>
+                            <div
+                                class="filter-menu"
+                                id="filter-menu"
+                                hidden
+                            ></div>
+                        </div>
+                    </div>
+
+                    <div class="content-area">
+                        <div class="content-scroll" id="scroll">
+                            <div class="grid" id="grid"></div>
+
+                            <div class="empty-state" id="empty-state" hidden>
+                                <div class="empty-art"></div>
+                                <h2 id="empty-title">No projects yet</h2>
+                                <p id="empty-sub">
+                                    Add a folder and we'll find your projects
+                                    for you.
+                                </p>
+                                <button class="cta" id="empty-add">
+                                    Add folder
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="loading" id="loading">
+                            <div class="equalizer" aria-hidden="true">
+                                <span
+                                    style="
+                                        --peak: 0.12;
+                                        --dur: 0.85s;
+                                        --delay: 0s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.2;
+                                        --dur: 1.05s;
+                                        --delay: -0.07s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.38;
+                                        --dur: 0.85s;
+                                        --delay: -0.14s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.68;
+                                        --dur: 1.05s;
+                                        --delay: -0.21s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 1;
+                                        --dur: 0.85s;
+                                        --delay: -0.28s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.52;
+                                        --dur: 1.05s;
+                                        --delay: -0.35s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.32;
+                                        --dur: 0.85s;
+                                        --delay: -0.42s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.46;
+                                        --dur: 1.05s;
+                                        --delay: -0.49s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.32;
+                                        --dur: 0.85s;
+                                        --delay: -0.56s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.52;
+                                        --dur: 1.05s;
+                                        --delay: -0.63s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 1;
+                                        --dur: 0.85s;
+                                        --delay: -0.7s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.68;
+                                        --dur: 1.05s;
+                                        --delay: -0.77s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.38;
+                                        --dur: 0.85s;
+                                        --delay: -0.84s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.2;
+                                        --dur: 1.05s;
+                                        --delay: -0.91s;
+                                    "
+                                ></span>
+                                <span
+                                    style="
+                                        --peak: 0.12;
+                                        --dur: 0.85s;
+                                        --delay: -0.98s;
+                                    "
+                                ></span>
+                            </div>
+                            <span>Scanning projects…</span>
+                        </div>
+                    </div>
+                </main>
             </div>
-          </div>
+        </div>
 
-          <div class="loading" id="loading">
-            <div class="equalizer" aria-hidden="true">
-              <span style="--peak:.12; --dur:.85s; --delay:0s"></span>
-              <span style="--peak:.20; --dur:1.05s; --delay:-.07s"></span>
-              <span style="--peak:.38; --dur:.85s; --delay:-.14s"></span>
-              <span style="--peak:.68; --dur:1.05s; --delay:-.21s"></span>
-              <span style="--peak:1; --dur:.85s; --delay:-.28s"></span>
-              <span style="--peak:.52; --dur:1.05s; --delay:-.35s"></span>
-              <span style="--peak:.32; --dur:.85s; --delay:-.42s"></span>
-              <span style="--peak:.46; --dur:1.05s; --delay:-.49s"></span>
-              <span style="--peak:.32; --dur:.85s; --delay:-.56s"></span>
-              <span style="--peak:.52; --dur:1.05s; --delay:-.63s"></span>
-              <span style="--peak:1; --dur:.85s; --delay:-.70s"></span>
-              <span style="--peak:.68; --dur:1.05s; --delay:-.77s"></span>
-              <span style="--peak:.38; --dur:.85s; --delay:-.84s"></span>
-              <span style="--peak:.20; --dur:1.05s; --delay:-.91s"></span>
-              <span style="--peak:.12; --dur:.85s; --delay:-.98s"></span>
+        <!-- Project detail -->
+        <div class="overlay" id="detail-overlay" hidden>
+            <div class="modal detail" role="dialog" aria-modal="true">
+                <button class="modal-close" id="detail-close" title="Close">
+                    <span class="mc-ic"></span>
+                </button>
+                <div class="detail-hero" id="detail-hero"></div>
+                <div class="detail-body">
+                    <h2 id="detail-name"></h2>
+                    <div class="detail-path" id="detail-path" title="Copy path">
+                        <span class="dp-ic"></span><span class="dp-text"></span
+                        ><button
+                            class="copy-btn"
+                            id="detail-copy"
+                            title="Copy path"
+                        >
+                            <span class="cp-ic"></span>
+                        </button>
+                    </div>
+                    <div class="detail-actions" id="detail-actions"></div>
+                    <p class="detail-desc" id="detail-desc"></p>
+                    <div class="detail-stacks" id="detail-stacks"></div>
+                </div>
             </div>
-            <span>Scanning projects…</span>
-          </div>
         </div>
-      </main>
-    </div>
-  </div>
 
-  <!-- Project detail -->
-  <div class="overlay" id="detail-overlay" hidden>
-    <div class="modal detail" role="dialog" aria-modal="true">
-      <button class="modal-close" id="detail-close" title="Close"><span class="mc-ic"></span></button>
-      <div class="detail-hero" id="detail-hero"></div>
-      <div class="detail-body">
-        <h2 id="detail-name"></h2>
-        <div class="detail-path" id="detail-path" title="Copy path">
-          <span class="dp-ic"></span><span class="dp-text"></span><button class="copy-btn" id="detail-copy" title="Copy path"><span class="cp-ic"></span></button>
+        <!-- Name prompt (new project / folder / file) -->
+        <div class="overlay" id="prompt-overlay" hidden>
+            <div class="modal prompt" role="dialog" aria-modal="true">
+                <h3 id="prompt-title">New project</h3>
+                <p class="prompt-location">
+                    <span>Location</span>
+                    <span class="prompt-loc-value" id="prompt-location">—</span>
+                    <button class="link-btn" id="prompt-browse">Change…</button>
+                </p>
+                <input
+                    class="prompt-input"
+                    id="prompt-name"
+                    type="text"
+                    placeholder="Name"
+                    spellcheck="false"
+                    autocomplete="off"
+                />
+                <div class="prompt-actions">
+                    <button class="ghost-btn" id="prompt-cancel">Cancel</button>
+                    <button class="primary-btn" id="prompt-ok">Create</button>
+                </div>
+            </div>
         </div>
-        <div class="detail-actions" id="detail-actions"></div>
-        <p class="detail-desc" id="detail-desc"></p>
-        <div class="detail-stacks" id="detail-stacks"></div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Name prompt (new project / folder / file) -->
-  <div class="overlay" id="prompt-overlay" hidden>
-    <div class="modal prompt" role="dialog" aria-modal="true">
-      <h3 id="prompt-title">New project</h3>
-      <p class="prompt-location">
-        <span>Location</span>
-        <span class="prompt-loc-value" id="prompt-location">—</span>
-        <button class="link-btn" id="prompt-browse">Change…</button>
-      </p>
-      <input class="prompt-input" id="prompt-name" type="text" placeholder="Name" spellcheck="false" autocomplete="off" />
-      <div class="prompt-actions">
-        <button class="ghost-btn" id="prompt-cancel">Cancel</button>
-        <button class="primary-btn" id="prompt-ok">Create</button>
-      </div>
-    </div>
-  </div>
+        <!-- Settings -->
+        <div class="overlay" id="settings-overlay" hidden>
+            <div class="modal settings" role="dialog" aria-modal="true">
+                <button class="modal-close" id="settings-close" title="Close">
+                    <span class="mc-ic"></span>
+                </button>
+                <h3>Settings</h3>
+                <div class="settings-section">
+                    <div class="settings-label">Project folders</div>
+                    <ul class="roots-list" id="roots-list"></ul>
+                    <button class="side-btn" id="settings-add-folder">
+                        <span class="sb-ic"></span><span>Add folder</span>
+                    </button>
+                </div>
+                <p class="settings-hint" id="settings-hint"></p>
+            </div>
+        </div>
 
-  <!-- Settings -->
-  <div class="overlay" id="settings-overlay" hidden>
-    <div class="modal settings" role="dialog" aria-modal="true">
-      <button class="modal-close" id="settings-close" title="Close"><span class="mc-ic"></span></button>
-      <h3>Settings</h3>
-      <div class="settings-section">
-        <div class="settings-label">Project folders</div>
-        <ul class="roots-list" id="roots-list"></ul>
-        <button class="side-btn" id="settings-add-folder"><span class="sb-ic"></span><span>Add folder</span></button>
-      </div>
-      <p class="settings-hint" id="settings-hint"></p>
-    </div>
-  </div>
+        <!-- Context menu -->
+        <div class="context-menu" id="context-menu" hidden></div>
 
-  <!-- Context menu -->
-  <div class="context-menu" id="context-menu" hidden></div>
+        <!-- Difficulty picker (popover) -->
+        <div class="rate-menu" id="rate-menu" hidden></div>
 
-  <!-- Difficulty picker (popover) -->
-  <div class="rate-menu" id="rate-menu" hidden></div>
+        <!-- Changed files (popover) -->
+        <div class="file-menu" id="file-menu" hidden></div>
 
-  <!-- Changed files (popover) -->
-  <div class="file-menu" id="file-menu" hidden></div>
+        <!-- Status override (popover) -->
+        <div class="rate-menu" id="status-menu" hidden></div>
 
-  <!-- Status override + run script (popovers) -->
-  <div class="rate-menu" id="status-menu" hidden></div>
-  <div class="rate-menu" id="script-menu" hidden></div>
+        <!-- Toast -->
+        <div class="toast" id="toast" hidden></div>
 
-  <!-- Toast -->
-  <div class="toast" id="toast" hidden></div>
-
-  <script src="icons.js"></script>
-  <script src="app.js"></script>
-</body>
+        <script src="icons.js"></script>
+        <script src="app.js"></script>
+    </body>
 </html>

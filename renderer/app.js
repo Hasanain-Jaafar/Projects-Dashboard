@@ -21,7 +21,6 @@ const state = {
   descriptions: {},
   names: {},
   statuses: {},
-  runs: {},
   filters: { status: "all", git: "all", fav: false, tags: new Set() },
   editor: null,
   scanning: false,
@@ -535,22 +534,24 @@ let lastContextPos = { x: 0, y: 0 };
 
 // Shared popover positioning (rate picker, changed-files list).
 function positionPopover(el, anchor) {
-  const rect = el.getBoundingClientRect();
+  // offset* are layout sizes and ignore the pop-in scale; getBoundingClientRect()
+  // reports a smaller box mid-animation and lets the popover overflow the window.
+  const w = el.offsetWidth;
+  const h = el.offsetHeight;
   let x;
   let y;
   if (anchor && anchor.getBoundingClientRect) {
     const a = anchor.getBoundingClientRect();
     x = a.left;
     y = a.bottom + 6;
-    if (y + rect.height > window.innerHeight - 8) y = a.top - rect.height - 6;
+    if (y + h > window.innerHeight - 8) y = a.top - h - 6;
   } else {
     x = lastContextPos.x;
     y = lastContextPos.y;
-    if (y + rect.height > window.innerHeight - 8)
-      y = Math.max(8, window.innerHeight - rect.height - 8);
+    if (y + h > window.innerHeight - 8)
+      y = Math.max(8, window.innerHeight - h - 8);
   }
-  if (x + rect.width > window.innerWidth - 8)
-    x = window.innerWidth - rect.width - 8;
+  if (x + w > window.innerWidth - 8) x = window.innerWidth - w - 8;
   el.style.left = Math.max(8, x) + "px";
   el.style.top = Math.max(8, y) + "px";
 }
@@ -659,34 +660,6 @@ function openStatusMenu(anchor, path) {
     );
   }
   menu.innerHTML = items.join("");
-  menu.hidden = false;
-  positionPopover(menu, anchor);
-}
-
-function hideScriptMenu() {
-  const m = document.getElementById("script-menu");
-  if (m) m.hidden = true;
-}
-
-function openScriptMenu(anchor, path) {
-  const menu = document.getElementById("script-menu");
-  const p = findProject(path);
-  if (!menu || !p) return;
-  const scripts = p.scripts || [];
-  if (!scripts.length) {
-    toast("No scripts in package.json", true);
-    return;
-  }
-  const manager = p.packageManager || "npm";
-  menu.innerHTML =
-    `<div class="file-menu-head">Run script (${esc(manager)})</div>` +
-    scripts
-      .map(
-        (s) =>
-          `<div class="rate-item" data-action="run-script" data-path="${esc(path)}" data-script="${esc(s)}">` +
-          `<span class="script-ic">${window.iconSvg("play")}</span><span>${esc(s)}</span></div>`,
-      )
-      .join("");
   menu.hidden = false;
   positionPopover(menu, anchor);
 }
@@ -1061,17 +1034,9 @@ function cardHtml(p) {
       ? `<div class="card-foot">${gitHtml}${updatedHtml}</div>`
       : "";
 
-  const runBtn = p.runScript
-    ? `<button class="card-action" data-action="run" data-path="${esc(p.path)}" title="Run ${esc(p.runScript)}">${window.iconSvg("play")}</button>`
-    : "";
-
   const rating = (state.ratings && state.ratings[p.path]) || 0;
-  const run = runInfo(p.path);
-  const runPill = run
-    ? `<button class="run-pill run-pill-sm" data-action="run-open" data-path="${esc(p.path)}" title="${esc("Running " + run.script + (run.url ? " at " + run.url : ""))}"><span class="run-dot"></span>${esc(run.port ? ":" + run.port : run.script)}</button>`
-    : "";
   const statusPill = statusBadge(p);
-  const leftMeta = difficultyHtml(p.path, rating) + runPill;
+  const leftMeta = difficultyHtml(p.path, rating);
   const metaRowInner =
     leftMeta || statusPill
       ? `<span class="meta-left">${leftMeta}</span>${statusPill}`
@@ -1111,7 +1076,6 @@ function cardHtml(p) {
         <div class="card-back-top">
           <div class="card-actions">
             <button class="card-action" data-action="editor" data-path="${esc(p.path)}" title="Open in editor">${window.iconSvg("code")}</button>
-            ${runBtn}
             <button class="card-action" data-action="terminal" data-path="${esc(p.path)}" title="Open terminal">${window.iconSvg("terminal")}</button>
           </div>
           <button class="card-fav${fav ? " on" : ""}" data-action="favorite" data-path="${esc(p.path)}" title="${fav ? "Remove from favorites" : "Add to favorites"}">${window.iconSvg(fav ? "starFill" : "star")}</button>
@@ -1214,22 +1178,6 @@ function observeLazy() {
 
 /* ---------- actions ---------- */
 
-async function runProject(path, script) {
-  const p = findProject(path);
-  const r = await bridge.runProject(path, script || (p && p.runScript));
-  if (r && r.ok) toast(`Running ${r.manager} run ${r.script}`);
-  else toast((r && r.error) || "Could not run project", true);
-}
-
-async function stopProject(path) {
-  await bridge.stopProject(path);
-  toast("Stopped");
-}
-
-function runInfo(path) {
-  return (state.runs && state.runs[path]) || null;
-}
-
 function openRepo(path) {
   const p = findProject(path);
   const url = (p && (p.remoteWeb || (p.git && p.git.remote))) || null;
@@ -1265,27 +1213,6 @@ async function handleAction(action, path, el) {
     case "editor":
       if (window.extras) window.extras.openEditor(path);
       else bridge.openInEditor(path);
-      break;
-    case "run":
-      runProject(path);
-      break;
-    case "run-script":
-      runProject(path, el && el.dataset.script);
-      hideScriptMenu();
-      break;
-    case "run-menu":
-      openScriptMenu(el, path);
-      break;
-    case "run-open": {
-      const r = runInfo(path);
-      if (r && r.url)
-        bridge.openExternal(r.url).then((res) => {
-          if (res && !res.ok) toast("Could not open URL", true);
-        });
-      break;
-    }
-    case "stop":
-      stopProject(path);
       break;
     case "git-files":
       openGitFilesMenu(el, path);
@@ -1350,12 +1277,6 @@ function copyPath(path) {
 function detailActionsHtml(p) {
   const actions = [
     { icon: "code", label: "Open in editor", action: "editor", primary: true },
-    {
-      icon: "play",
-      label: p.runScript ? `Run (${p.runScript})` : "Run project",
-      action: "run",
-      disabled: !p.runScript,
-    },
     { icon: "terminal", label: "Open terminal", action: "terminal" },
     { icon: "external", label: "Open folder", action: "open" },
     { icon: "copy", label: "Copy path", action: "copy" },
@@ -1406,36 +1327,6 @@ function detailInfoHtml(p) {
     (sInfo.override
       ? `<button class="link-btn" data-action="set-status" data-path="${esc(p.path)}" data-status="auto">Reset</button>`
       : "");
-
-  // Run controls: script list, live running state and port.
-  const run = runInfo(p.path);
-  let runHtml = "";
-  if (p.scripts && p.scripts.length) {
-    if (run) {
-      const where = run.url
-        ? run.url.replace(/^https?:\/\//, "")
-        : run.port
-          ? ":" + run.port
-          : "";
-      runHtml =
-        '<div class="run-row">' +
-        `<span class="run-pill" title="Started ${esc(fmtDate(run.startedAt))}"><span class="run-dot"></span>Running ${esc(run.script)}${where ? " \u00b7 " + esc(where) : ""}</span>` +
-        (run.url
-          ? `<button class="ghost-btn run-btn" data-action="run-open" data-path="${esc(p.path)}">${window.iconSvg("external")}<span>Open</span></button>`
-          : "") +
-        `<button class="ghost-btn run-btn" data-action="stop" data-path="${esc(p.path)}">Stop</button>` +
-        "</div>";
-    } else {
-      const preferred = p.runScript;
-      runHtml =
-        '<div class="run-row">' +
-        `<button class="primary-btn run-btn" data-action="run" data-path="${esc(p.path)}" title="${preferred ? "Runs " + esc(preferred) : "Runs the dev or start script"}">${window.iconSvg("play")}<span>${preferred ? "Run " + esc(preferred) : "Run project"}</span></button>` +
-        (p.scripts.length > 1
-          ? `<button class="ghost-btn run-btn" data-action="run-menu" data-path="${esc(p.path)}">Choose script\u2026</button>`
-          : "") +
-        "</div>";
-    }
-  }
 
   const tags = tagsFor(p);
   const tagsHtml =
@@ -1527,13 +1418,6 @@ function detailInfoHtml(p) {
     `<div class="info-row"><span class="info-label">Status</span><span class="info-value status-value">${statusHtml}</span></div>` +
     `<div class="info-row"><span class="info-label">Difficulty</span><span class="info-value">${difficultyPickerHtml(p.path, rating)}</span></div>` +
     "</div>" +
-    (runHtml
-      ? '<div class="detail-section"><div class="detail-section-title">' +
-        window.iconSvg("play") +
-        "Run</div>" +
-        runHtml +
-        "</div>"
-      : "") +
     '<div class="detail-section">' +
     `<div class="detail-section-title">${window.iconSvg("gitBranch")}Git</div>` +
     gitHtml +
@@ -1665,7 +1549,6 @@ function closeDetail() {
   hideRateMenu();
   hideGitFilesMenu();
   hideStatusMenu();
-  hideScriptMenu();
 }
 
 /* ---------- prompt modal ---------- */
@@ -1782,13 +1665,6 @@ function showContextMenu(x, y, path) {
   const repo = isRepo(p) && p.remoteWeb;
   const items = [
     { icon: "code", label: "Open in editor", action: "editor" },
-    p.runScript
-      ? {
-          icon: "play",
-          label: `Run (${p.packageManager || "npm"} run ${p.runScript})`,
-          action: "run",
-        }
-      : { icon: "play", label: "No run script", action: "run", disabled: true },
     { icon: "terminal", label: "Open terminal", action: "terminal" },
     { icon: "external", label: "Open folder", action: "open" },
     { icon: "copy", label: "Copy path", action: "copy" },
@@ -1827,13 +1703,13 @@ function showContextMenu(x, y, path) {
     .join("");
   menu.hidden = false;
 
-  const rect = menu.getBoundingClientRect();
-  let px = x;
-  let py = y;
-  if (px + rect.width > window.innerWidth)
-    px = window.innerWidth - rect.width - 8;
-  if (py + rect.height > window.innerHeight)
-    py = window.innerHeight - rect.height - 8;
+  // Use the layout size (offset*), not getBoundingClientRect(): the pop-in
+  // animation scales the menu down, which under-measures it and lets the menu
+  // overflow the bottom of the window.
+  const w = menu.offsetWidth;
+  const h = menu.offsetHeight;
+  const px = Math.max(8, Math.min(x, window.innerWidth - w - 8));
+  const py = Math.max(8, Math.min(y, window.innerHeight - h - 8));
   menu.style.left = px + "px";
   menu.style.top = py + "px";
 }
@@ -1983,16 +1859,6 @@ function setupListeners() {
   // Auto-detect: the main process watches the projects folders and notifies us on changes.
   if (bridge.onProjectsChanged) bridge.onProjectsChanged(() => rescan());
 
-  // Live run state (script, port, exit).
-  if (bridge.onRunUpdate) {
-    bridge.onRunUpdate((runs) => {
-      state.runs = runs || {};
-      applyFilters();
-      const ov = document.getElementById("detail-overlay");
-      if (state.current && ov && !ov.hidden) showDetail(state.current);
-    });
-  }
-
   // Frame the folder picker around a single "projects folder".
   const addBtn = document.getElementById("btn-add-folder");
   if (addBtn && addBtn.lastElementChild)
@@ -2111,34 +1977,15 @@ function setupListeners() {
   window.addEventListener("resize", hideGitFilesMenu);
   document.addEventListener("scroll", hideGitFilesMenu, true);
 
-  // Status + script popovers.
+  // Status popover.
   document.addEventListener("click", (e) => {
-    if (e.target.closest("#status-menu") || e.target.closest("#script-menu"))
-      return;
-    if (
-      e.target.closest('[data-action="status-menu"]') ||
-      e.target.closest('[data-action="run-menu"]')
-    )
-      return;
+    if (e.target.closest("#status-menu")) return;
+    if (e.target.closest('[data-action="status-menu"]')) return;
     hideStatusMenu();
-    hideScriptMenu();
   });
-  window.addEventListener("blur", () => {
-    hideStatusMenu();
-    hideScriptMenu();
-  });
-  window.addEventListener("resize", () => {
-    hideStatusMenu();
-    hideScriptMenu();
-  });
-  document.addEventListener(
-    "scroll",
-    () => {
-      hideStatusMenu();
-      hideScriptMenu();
-    },
-    true,
-  );
+  window.addEventListener("blur", hideStatusMenu);
+  window.addEventListener("resize", hideStatusMenu);
+  document.addEventListener("scroll", hideStatusMenu, true);
 
   document.getElementById("nav-all").addEventListener("click", (e) => {
     e.preventDefault();
@@ -2278,7 +2125,6 @@ function setupListeners() {
       filterMenu.hidden = true;
       document.getElementById("filter-trigger").classList.remove("open");
     } else if (!document.getElementById("status-menu").hidden) hideStatusMenu();
-    else if (!document.getElementById("script-menu").hidden) hideScriptMenu();
     else if (!document.getElementById("file-menu").hidden) hideGitFilesMenu();
     else if (!document.getElementById("rate-menu").hidden) hideRateMenu();
     else if (!document.getElementById("context-menu").hidden) hideContextMenu();
@@ -2329,13 +2175,6 @@ async function init() {
     const max = await bridge.windowIsMaximized();
     if (max) document.getElementById("titlebar").classList.add("maximized");
   } catch {}
-
-  state.runs = {};
-  try {
-    state.runs = (await bridge.getRuns()) || {};
-  } catch {
-    state.runs = {};
-  }
 
   setupListeners();
   await rescan();
