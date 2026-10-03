@@ -1,6 +1,6 @@
 # Projects Dashboard
 
-A glassy, Apple-inspired desktop dashboard for your local code projects — a fast
+A glassy, Apple-inspired desktop dashboard for your local code project — a fast
 personal command center for finding, understanding, and opening your work.
 Built with Electron: frameless window, pastel glassmorphism, and
 SF-Symbol-style icons.
