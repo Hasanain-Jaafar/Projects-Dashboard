@@ -1054,6 +1054,12 @@ function cardHtml(p) {
           <div class="card-front-body">
             <h3 class="card-title">${esc(nameFor(p))}</h3>
             ${desc ? `<p class="card-desc">${esc(desc)}</p>` : ""}
+            <div class="card-stacks">${stacks}</div>
+            ${tagsHtml}
+            <div class="card-meta">
+              ${foot}
+              ${metaRow}
+            </div>
           </div>
         </div>
         <div class="card-face card-back">

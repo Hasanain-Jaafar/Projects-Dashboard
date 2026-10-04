@@ -859,7 +859,7 @@ svg {
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 16px;
 }
 
@@ -874,7 +874,7 @@ svg {
    tags, git, status) slides in from the left, over the preview. */
 .card {
     position: relative;
-    height: 212px;
+    height: 288px;
     z-index: 1;
     cursor: pointer;
     /* Rounded silhouette + shadow live here; the clipping happens on .card-inner so
@@ -894,20 +894,13 @@ svg {
     overflow: hidden;
 }
 
-/* The details panel slides in from the left, over the preview. The 300ms delay
-   lives on the :hover rule, so a quick pass over a card doesn't trigger it and
-   leaving snaps straight back. */
-.card:hover .card-back,
-.card:focus-visible .card-back,
-.card:focus-within .card-back {
-    transform: translateX(0);
-    transition-delay: 0.3s;
-}
+/* Grid view: the details panel no longer slides in on hover; the stacks now
+   live on the card front under the description. List view shows .card-back
+   statically (see the .grid.list rules), so this only affects grid view. */
 
 .card:hover {
     z-index: 6;
     box-shadow: var(--shadow);
-    transition-delay: 0.3s;
 }
 
 .card-face {
@@ -960,6 +953,27 @@ svg {
     font-size: 13.5px;
     -webkit-line-clamp: 3;
     line-clamp: 3;
+}
+
+/* Stacks sit under the description on the card front (grid view). */
+.card-front .card-stacks {
+    margin-top: 2px;
+}
+
+/* The front body now stacks a lot of rows; keep every row at its natural
+   height (title/desc have overflow:hidden, which would otherwise let flex
+   shrink them to zero). */
+.card-front-body > * {
+    flex-shrink: 0;
+}
+
+/* Tags + git/status/difficulty now live on the front too. */
+.card-front .card-tags {
+    margin-top: 0;
+}
+.card-front .card-meta {
+    margin-top: auto;
+    padding-top: 4px;
 }
 
 /* ---------- Details panel: slides in over the preview ---------- */
@@ -3209,9 +3223,6 @@ a:focus-visible,
 .grid.compact {
     grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
     gap: 12px;
-}
-.grid.compact .card {
-    height: 184px;
 }
 .grid.compact .card-thumb {
     flex: 0 0 36%;
