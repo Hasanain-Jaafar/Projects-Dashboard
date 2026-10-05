@@ -49,6 +49,21 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
+// On Linux/Wayland, global shortcuts are only delivered through the XDG portal.
+if (process.platform === "linux") {
+  app.commandLine.appendSwitch("enable-features", "GlobalShortcutsPortal");
+}
+
+// Packaged builds get their own user-data folder. This keeps an installed app
+// from inheriting settings written by a development run (same machine), and
+// guarantees a fresh install on any machine starts empty.
+if (app.isPackaged) {
+  app.setPath(
+    "userData",
+    path.join(app.getPath("appData"), "Projects Dashboard"),
+  );
+}
+
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
@@ -85,22 +100,73 @@ function safeJoin(base, name) {
   return path.join(base, clean);
 }
 
+// Open a terminal in the given directory. Cross-platform.
 function openInTerminal(dir) {
-  const wt = spawn("wt.exe", ["-d", dir], { detached: true, stdio: "ignore" });
-  wt.on("error", () => {
-    const cmd = spawn(
-      "cmd.exe",
-      ["/c", "start", "cmd.exe", "/K", "cd", "/d", dir],
-      {
+  if (process.platform === "win32") {
+    // Windows Terminal first, falling back to a plain cmd window.
+    const wt = spawn("wt.exe", ["-d", dir], {
+      detached: true,
+      stdio: "ignore",
+    });
+    wt.on("error", () => {
+      const cmd = spawn(
+        "cmd.exe",
+        ["/c", "start", "cmd.exe", "/K", "cd", "/d", dir],
+        {
+          detached: true,
+          stdio: "ignore",
+          windowsHide: true,
+        },
+      );
+      cmd.on("error", () => {});
+      cmd.unref();
+    });
+    wt.unref();
+    return;
+  }
+
+  if (process.platform === "darwin") {
+    const child = spawn("open", ["-a", "Terminal", dir], {
+      detached: true,
+      stdio: "ignore",
+      cwd: dir,
+    });
+    child.on("error", () => {});
+    child.unref();
+    return;
+  }
+
+  // Linux / BSD: honour $TERMINAL, then try common terminal emulators.
+  // Passing cwd makes each emulator open on the project folder.
+  const candidates = [
+    process.env.TERMINAL,
+    "x-terminal-emulator",
+    "gnome-terminal",
+    "konsole",
+    "xfce4-terminal",
+    "kitty",
+    "alacritty",
+    "wezterm",
+    "xterm",
+  ].filter(Boolean);
+
+  const tryNext = (i) => {
+    if (i >= candidates.length) return;
+    let child;
+    try {
+      child = spawn(candidates[i], [], {
         detached: true,
         stdio: "ignore",
-        windowsHide: true,
-      },
-    );
-    cmd.on("error", () => {});
-    cmd.unref();
-  });
-  wt.unref();
+        cwd: dir,
+      });
+    } catch {
+      tryNext(i + 1);
+      return;
+    }
+    child.on("error", () => tryNext(i + 1));
+    child.unref();
+  };
+  tryNext(0);
 }
 
 // ---------- Editor integration ----------
@@ -128,7 +194,10 @@ const EDITOR_CANDIDATES = [
             path.join(process.env.PROGRAMFILES || "", "Zed", "Zed.exe"),
           ]
         : [
+            "/usr/bin/zed",
             "/usr/local/bin/zed",
+            "/snap/bin/zed",
+            "/opt/zed/zed",
             "/opt/homebrew/bin/zed",
             "/Applications/Zed.app/Contents/MacOS/zed",
           ],
@@ -148,7 +217,10 @@ const EDITOR_CANDIDATES = [
             ),
           ]
         : [
+            "/usr/bin/code",
             "/usr/local/bin/code",
+            "/snap/bin/code",
+            "/usr/share/code/bin/code",
             "/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code",
           ],
   },
@@ -173,7 +245,10 @@ const EDITOR_CANDIDATES = [
             ),
           ]
         : [
+            "/usr/bin/cursor",
             "/usr/local/bin/cursor",
+            "/snap/bin/cursor",
+            "/opt/Cursor/cursor",
             "/Applications/Cursor.app/Contents/MacOS/Cursor",
           ],
   },
@@ -639,9 +714,10 @@ function createWindow() {
     mainWindow.webContents.send("window:maximized-changed", false),
   );
 
-  // Close to tray (when enabled).
+  // Close to tray, but only when a tray actually exists — otherwise closing
+  // would hide the window with no way to bring it back (common on Linux).
   mainWindow.on("close", (e) => {
-    if (!isQuitting && getSettings().closeToTray) {
+    if (!isQuitting && getSettings().closeToTray && tray) {
       e.preventDefault();
       mainWindow.hide();
     }

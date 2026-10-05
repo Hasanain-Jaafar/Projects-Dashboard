@@ -3,3 +3,9 @@ npm-debug.log*
 dist/
 out/
 .DS_Store
+
+# Built installers placed in the project root
+/*.exe
+/*.tar.gz
+/*.deb
+/*.AppImage

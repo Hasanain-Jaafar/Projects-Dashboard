@@ -1,7 +1,8 @@
 :root {
     --font:
         -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-        "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        "Segoe UI Variable Text", "Segoe UI", Inter, Ubuntu, Cantarell,
+        "Noto Sans", "DejaVu Sans", system-ui, sans-serif;
 
     --bg: #e9ebf4;
 
